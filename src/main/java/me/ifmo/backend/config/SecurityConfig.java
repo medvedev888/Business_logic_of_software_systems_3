@@ -4,7 +4,6 @@ import me.ifmo.backend.security.jaas.DatabaseLoginModule;
 import me.ifmo.backend.security.jaas.JaasAuthorityGranter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -25,7 +24,6 @@ import java.util.Map;
 
 @Configuration
 @EnableWebSecurity
-@Profile("!keycloak")
 @EnableMethodSecurity
 public class SecurityConfig {
 
