@@ -54,11 +54,6 @@ spring:
         jta:
           platform: org.hibernate.engine.transaction.jta.platform.internal.AtomikosJtaPlatform
 
-logging:
-  level:
-    org.springframework.security: DEBUG
-    me.ifmo.backend.security: DEBUG
-
 atomikos:
   properties:
     max-timeout: 300000
