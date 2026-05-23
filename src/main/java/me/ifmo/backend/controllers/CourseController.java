@@ -33,13 +33,7 @@ public class CourseController {
             @RequestParam(required = false) Boolean onlyAvailable,
             Pageable pageable
     ) {
-        return courseService.getCourses(
-                title,
-                minPrice,
-                maxPrice,
-                isActive,
-                onlyAvailable,
-                pageable
+        return courseService.getCourses(title, minPrice, maxPrice, isActive, onlyAvailable, pageable
         ).map(courseMapper::toCourseDTO);
     }
 
