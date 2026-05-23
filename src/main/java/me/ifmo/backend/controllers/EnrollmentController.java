@@ -15,10 +15,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+@Validated
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/enrollments")
-@Validated
 public class EnrollmentController {
 
     private final EnrollmentService enrollmentService;
