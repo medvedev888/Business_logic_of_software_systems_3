@@ -14,7 +14,6 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 public class BankPaymentRequest {
-
     private Long enrollmentId;
     private BigDecimal amount;
     private String currency;

@@ -10,6 +10,9 @@ import me.ifmo.backend.exceptions.NotFoundException;
 import me.ifmo.backend.integration.bank.BankClient;
 import me.ifmo.backend.integration.bank.DTO.BankPaymentRequest;
 import me.ifmo.backend.integration.bank.DTO.BankPaymentResponse;
+import me.ifmo.backend.integration.kafka.KafkaPaymentEventProducer;
+import me.ifmo.backend.integration.kafka.event.PaymentCreateRequestedEvent;
+import me.ifmo.backend.integration.kafka.event.PaymentCreatedEvent;
 import me.ifmo.backend.repositories.EnrollmentRepository;
 import me.ifmo.backend.repositories.PaymentRepository;
 import me.ifmo.backend.services.PaymentService;
@@ -25,10 +28,8 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final EnrollmentRepository enrollmentRepository;
-    private final BankClient bankClient;
+    private final KafkaPaymentEventProducer kafkaPaymentEventProducer;
 
-    @Value("${bank.callback-url}")
-    private String callbackUrl;
 
     @Override
     public Payment createPayment(Long enrollmentId) {
@@ -53,36 +54,54 @@ public class PaymentServiceImpl implements PaymentService {
             throw new BusinessException("Enrollment must be linked to a course");
         }
 
-        BankPaymentRequest bankPaymentRequest = BankPaymentRequest.builder()
-                .enrollmentId(enrollment.getId())
-                .amount(enrollment.getCourse().getPrice())
-                .currency(enrollment.getCourse().getCurrency())
-                .callbackUrl(callbackUrl)
-                .build();
-
-        BankPaymentResponse bankPaymentResponse = bankClient.createPayment(bankPaymentRequest);
-
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime expiresAt = now.plusMinutes(1);
-
-        Payment payment = Payment.builder()
-                .enrollment(enrollment)
-                .providerPaymentId(bankPaymentResponse.getProviderPaymentId())
-                .amount(enrollment.getCourse().getPrice())
-                .currency(enrollment.getCourse().getCurrency())
-                .status(PaymentStatus.CREATED)
-                .paymentUrl(bankPaymentResponse.getPaymentUrl())
-                .expiresAt(expiresAt)
-                .createdAt(now)
-                .updatedAt(now)
-                .build();
 
         enrollment.setPaymentExpiresAt(expiresAt);
         enrollment.setUpdatedAt(now);
 
         enrollmentRepository.save(enrollment);
-        return paymentRepository.save(payment);
+
+        Payment payment = Payment.builder()
+                .enrollment(enrollment)
+                .providerPaymentId(null)
+                .amount(enrollment.getCourse().getPrice())
+                .currency(enrollment.getCourse().getCurrency())
+                .status(PaymentStatus.CREATED)
+                .paymentUrl(null)
+                .expiresAt(expiresAt)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+
+        Payment savedPayment = paymentRepository.save(payment);
+
+        PaymentCreateRequestedEvent paymentCreateRequestedEvent = new PaymentCreateRequestedEvent(
+                savedPayment.getId(),
+                enrollment.getId(),
+                savedPayment.getAmount(),
+                savedPayment.getCurrency()
+        );
+
+        kafkaPaymentEventProducer.sendPaymentCreateRequested(paymentCreateRequestedEvent);
+
+        return savedPayment;
     }
+
+
+    @Override
+    public void updatePaymentWithProviderData(PaymentCreatedEvent event) {
+        var payment = paymentRepository.findById(event.paymentId()).orElseThrow(
+                () -> new NotFoundException("Payment with id " + event.paymentId() + " not found")
+        );
+
+        payment.setProviderPaymentId(event.providerPaymentId());
+        payment.setPaymentUrl(event.paymentUrl());
+        payment.setUpdatedAt(LocalDateTime.now());
+
+        paymentRepository.save(payment);
+    }
+
 
     @Override
     @Transactional(readOnly = true)
