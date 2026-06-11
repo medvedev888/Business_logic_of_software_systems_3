@@ -6,9 +6,12 @@ server:
   port: 8080
 
 logging:
+  pattern:
+    dateformat: "yyyy-MM-dd HH:mm:ss"
   level:
     org.hibernate.SQL: INFO
     org.hibernate.type.descriptor.sql.BasicBinder: INFO
+    org.springframework.batch: WARN
 
 ---
 spring:
@@ -21,6 +24,16 @@ spring:
   mvc:
     servlet:
       path: /api
+
+  batch:
+    jdbc:
+      initialize-schema: always
+      isolation-level-for-create: default
+    job:
+      enabled: false
+
+  quartz:
+    job-store-type: memory
 
   datasource:
     xa:
@@ -85,6 +98,16 @@ spring:
   mvc:
     servlet:
       path: /api
+
+  batch:
+    jdbc:
+      initialize-schema: always
+      isolation-level-for-create: default
+    job:
+      enabled: false
+
+  quartz:
+    job-store-type: memory
 
   datasource:
     xa:
