@@ -14,6 +14,7 @@ public class PaymentTransactionService {
     private final TransactionTemplate transactionTemplate;
     private final PaymentCallbackService paymentCallbackService;
     private final PaymentService paymentService;
+    private final BitrixIntegrationService bitrixIntegrationService;
 
     public Payment createPayment(Long enrollmentId) {
         return transactionTemplate.execute(status -> {
@@ -48,7 +49,9 @@ public class PaymentTransactionService {
                 throw exception;
             }
         });
+        bitrixIntegrationService.createPaidCourseDeal(providerPaymentId);
     }
+
 
     public void processFailedWebhook(String providerPaymentId, String failureReason) {
         transactionTemplate.executeWithoutResult(status -> {
@@ -60,4 +63,5 @@ public class PaymentTransactionService {
             }
         });
     }
+
 }

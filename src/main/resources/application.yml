@@ -151,3 +151,6 @@ atomikos:
 bank:
   base-url: http://localhost:1489
   callback-url: http://localhost:1488/api/payments/webhook
+
+bitrix:
+  webhook-url: ${BITRIX_WEBHOOK_URL}
